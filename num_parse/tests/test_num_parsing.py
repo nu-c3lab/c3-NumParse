@@ -65,8 +65,14 @@ class TestNumParse(unittest.TestCase):
     def test_112(self):
         self.assertEqual(self.num_parser.parse_num('112'), 112)
 
+    def test_112_as_int(self):
+        self.assertEqual(self.num_parser.parse_num(112), 112)
+
     def test_11211234(self):
         self.assertEqual(self.num_parser.parse_num('11211234'), 11211234)
+
+    def test_11211234_as_int(self):
+        self.assertEqual(self.num_parser.parse_num(11211234), 11211234)
 
     #######################################################
     # Mixed number words AND number values
@@ -74,6 +80,12 @@ class TestNumParse(unittest.TestCase):
 
     def test_4_million(self):
         self.assertEqual(self.num_parser.parse_num('4 million'), 4000000)
+
+    def test_812_million(self):
+        self.assertEqual(self.num_parser.parse_num('812 million'), 812000000)
+
+    def test_1000_million(self):
+        self.assertEqual(self.num_parser.parse_num('1000 million'), 1000000000)
 
     #######################################################
     # Decimal Values
@@ -120,6 +132,12 @@ class TestNumParse(unittest.TestCase):
 
     def test_1_000_000(self):
         self.assertEqual(self.num_parser.parse_num('1,000,000'), 1000000)
+
+    def test_1_000(self):
+        self.assertEqual(self.num_parser.parse_num('1,000'), 1000)
+
+    def test_124_000(self):
+        self.assertEqual(self.num_parser.parse_num('124,000'), 124000)
 
     #######################################################
     # Value Ranges
