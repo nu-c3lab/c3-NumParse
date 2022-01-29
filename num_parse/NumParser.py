@@ -23,7 +23,7 @@ class NumParser(object):
         self.measures = word_to_num_values.measures
         self.relevant_words = []
         self.decimal_denoters = ['point', 'dot', '.']
-        self.negative_denoters = ['negative', '-', 'neg']
+        self.negative_denoters = ['negative', '-', 'neg', 'minus']
 
     def parse_num(self,
                   number_string: str) -> Union[int, float]:

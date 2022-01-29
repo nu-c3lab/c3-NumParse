@@ -22,6 +22,9 @@ class TestNumParse(unittest.TestCase):
     def test_hundred(self):
         self.assertEqual(self.num_parser.parse_num('hundred'), 100)
 
+    def test_one_two_three(self):
+        self.assertEqual(self.num_parser.parse_num('one two three'), 123)
+
     def test_one_hundred_and_forty_two(self):
         self.assertEqual(self.num_parser.parse_num('one hundred and forty two'), 142)
 
@@ -118,6 +121,15 @@ class TestNumParse(unittest.TestCase):
 
     def test_negative_one(self):
         self.assertEqual(self.num_parser.parse_num('negative one'), -1)
+
+    def test_negative_1(self):
+        self.assertEqual(self.num_parser.parse_num('negative 1'), -1)
+
+    def test_minus_one(self):
+        self.assertEqual(self.num_parser.parse_num('minus one'), -1)
+
+    def test_minus_1(self):
+        self.assertEqual(self.num_parser.parse_num('minus 1'), -1)
 
     #######################################################
     # Numbers words with dashes
