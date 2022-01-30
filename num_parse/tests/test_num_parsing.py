@@ -84,6 +84,9 @@ class TestNumParse(unittest.TestCase):
     def test_4_million(self):
         self.assertEqual(self.num_parser.parse_num('4 million'), 4000000)
 
+    def test_4_point_5_million(self):
+        self.assertEqual(self.num_parser.parse_num('4.5 million'), 4500000)
+
     def test_812_million(self):
         self.assertEqual(self.num_parser.parse_num('812 million'), 812000000)
 
@@ -125,11 +128,35 @@ class TestNumParse(unittest.TestCase):
     def test_negative_1(self):
         self.assertEqual(self.num_parser.parse_num('negative 1'), -1)
 
+    def test_negative_one_million(self):
+        self.assertEqual(self.num_parser.parse_num('negative one million'), -1000000)
+
+    def test_negative_1000000(self):
+        self.assertEqual(self.num_parser.parse_num('negative 1000000'), -1000000)
+
+    def test_negative_1000000_with_commas(self):
+        self.assertEqual(self.num_parser.parse_num('negative 1,000,000'), -1000000)
+
+    def test_negative_4_million(self):
+        self.assertEqual(self.num_parser.parse_num('negative 4 million'), -4000000)
+
+    def test_negative_sign_4_million(self):
+        self.assertEqual(self.num_parser.parse_num('-4 million'), -4000000)
+
+    def test_negative_sign_4_point_5_million(self):
+        self.assertEqual(self.num_parser.parse_num('-4.5 million'), -4500000)
+
     def test_minus_one(self):
         self.assertEqual(self.num_parser.parse_num('minus one'), -1)
 
     def test_minus_1(self):
         self.assertEqual(self.num_parser.parse_num('minus 1'), -1)
+
+    def test_negative_sign_negative_sign_1(self):
+        self.assertEqual(self.num_parser.parse_num('--1'), 1)
+
+    def test_negative_sign_space_negative_sign_1(self):
+        self.assertEqual(self.num_parser.parse_num('- -1'), 1)
 
     #######################################################
     # Numbers words with dashes

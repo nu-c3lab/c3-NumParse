@@ -53,7 +53,7 @@ class NumParser(object):
         #######################################################
         # Check cases where input is a raw number in a string
         #######################################################
-        if normalized_input.isdigit():
+        if self.is_int(normalized_input):
             return int(normalized_input)
 
         if self.is_float(normalized_input):
@@ -175,7 +175,7 @@ class NumParser(object):
         return word in self.number_words.keys() or \
                word in self.relevant_words or \
                word in self.negative_denoters or \
-               word.isdigit() or \
+               self.is_int(word) or \
                self.is_float(word)
 
 
@@ -183,20 +183,39 @@ class NumParser(object):
                  s: str) -> bool:
         """
         Determines if the given string can immediately be converted to a float value.
-        :param s: A string value.
+        :param s: The string to be checked.
         :return: Boolean denoting whether the string can be converted to a float.
         """
 
+        # TODO: Do a little string pre-processing to detect cases like "--1"?
+
         try:
             float(s)
+            return True
+        except ValueError:
+            return False
+
+    def is_int(self,
+               s: str) -> bool:
+        """
+        Determines if the given string can immediately be converted to an integer value.
+        :param s: The string to be checked.
+        :return: Boolean denoting whether the string can be converted to a integer.
+        """
+
+        # TODO: Do a little string pre-processing to detect cases like "--1"?
+
+        try:
+            int(s)
+            return True
         except ValueError:
             return False
 
     def has_float_word(self,
                        words: List[str]) -> Tuple[bool, str]:
         """
-
-        :param words:
+        Determines if the given list of words contains one that indicates a float value is present.
+        :param words: The list of strings/words to be checked.
         :return: A boolean denoting if the list of words has a term denoting a float, as well as that term as a string if it exists
         """
 
@@ -217,7 +236,7 @@ class NumParser(object):
         for number_word in number_words:
             if number_word in self.number_words:
                 numbers.append(self.number_words[number_word])
-            elif number_word.isdigit():
+            elif self.is_int(number_word):
                 numbers.append(int(number_word))
             elif self.is_float(number_word):
                 numbers.append(float(number_word))
@@ -267,7 +286,10 @@ class NumParser(object):
 
         # hack for now, better way TODO
         if len(clean_numbers) == 1:
-            total_sum += self.number_words[clean_numbers[0]]
+            if clean_numbers[0] in self.number_words:
+                total_sum += self.number_words[clean_numbers[0]]
+            elif self.is_int(clean_numbers[0]):
+                total_sum += int(clean_numbers[0])
 
         else:
             billion_index = clean_numbers.index('billion') if 'billion' in clean_numbers else -1

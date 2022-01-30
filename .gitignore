@@ -137,3 +137,6 @@ dmypy.json
 # VIM
 *.swp
 tags
+
+# Test files
+debug_tests.py
