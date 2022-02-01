@@ -12,39 +12,75 @@ import pint
 class RangeValue:
     def __init__(self,
                  min_val: pint.Quantity,
-                 max_val: pint.Quantity):
-        # TODO: Ensure units are the same (also ensure if one is dimensionless, then that Quantity takes the units of the other)
+                 max_val: pint.Quantity = None):
         self.min_val = min_val
-        self.max_val = max_val
+        self.max_val = max_val if max_val else min_val
+
+        # If either one of the Quantities is unitless, then add the units of the other Quantity to it
+        if self.max_val and self.max_val.unitless:
+            self.max_val *= self.min_val.units
+
+        if self.min_val.unitless and self.max_val and self.max_val.units:
+            self.min_val *= self.max_val.units
+
+        # Ensure units of the two values are the same
+        assert self.min_val.is_compatible_with(self.max_val)
 
     def __repr__(self):
         return '<RangeValue({}, {})>'.format(self.min_val.__repr__(), self.max_val.__repr__())
 
     def __str__(self):
-        return self.__repr__()
+        if self.min_val == self.max_val:
+            if self.min_val.unitless:
+                return str(self.min_val.m)
+            else:
+                return str(self.min_val.m) + ' ' + str(self.min_val.units)
+        else:
+            if self.min_val.unitless:
+                return str(self.min_val.m) + ' to ' + str(self.max_val.m)
+            else:
+                return str(self.min_val.m) + ' to ' + str(self.max_val.m) + ' ' + str(self.min_val.units)
 
     ########################################################
     # COMPARISON OPERATORS
     ########################################################
+    # TODO: Add unit tests for the RangeValue vs RangeValue cases
     def __eq__(self, other):
-        return self.min_val == other and self.max_val == other
+        if type(other) == RangeValue:
+            return self.min_val == other.min_val and self.max_val == other.max_val
+        else:
+            return self.min_val == other and self.max_val == other
 
     def __ge__(self, other):
-        return self.min_val >= other
+        if type(other) == RangeValue:
+            return self.min_val >= other.min_val and self.max_val >= other.max_val
+        else:
+            return self.min_val >= other
 
     def __gt__(self, other):
-        return self.min_val > other
+        if type(other) == RangeValue:
+            return self.min_val > other.min_val and self.max_val > other.max_val
+        else:
+            return self.min_val > other
 
     def __le__(self, other):
-        return self.max_val <= other
+        if type(other) == RangeValue:
+            return self.min_val <= other.min_val and self.max_val <= other.max_val
+        else:
+            return self.max_val <= other
 
     def __lt__(self, other):
-        return self.max_val < other
+        if type(other) == RangeValue:
+            return self.min_val < other.min_val and self.max_val < other.max_val
+        else:
+            return self.max_val < other
 
     ########################################################
     # ARITHMETIC OPERATORS
     ########################################################
-
+    # TODO: Check that the other value is compatible with the current RangeValue
+    # TODO: Add handling for performing arithmetic for two RangeValues??
+    # TODO: If so, add unit tests for arithmetic involving two RangeValues
     def __add__(self, other):
         return RangeValue(self.min_val + other, self.max_val + other)
 
