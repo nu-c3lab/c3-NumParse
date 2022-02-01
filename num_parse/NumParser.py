@@ -27,6 +27,7 @@ class NumParser(object):
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
         self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
         self.ureg = UnitRegistry()
+        self.unit_denoters = [x for x in self.ureg._units]
 
     def parse_num(self,
                   number_string: str) -> RangeValue:
@@ -64,6 +65,14 @@ class NumParser(object):
             raise ValueError("No relevant words/numbers in the given string!")
 
         #######################################################
+        # Check for unit words
+        #######################################################
+        # TODO: Add unit tests for unit parsing
+        # TODO: Figure out how to handle plurals of the units (lemmatize the word first before checking if it's in the set?)
+        # TODO: Figure out how to handles pre-fixed units (like cm, mm, etc.)
+        has_units, unit_string = self.has_unit_word(clean_words)
+
+        #######################################################
         # Handle value ranges
         #######################################################
         # TODO: Add unit tests RangeValue parsing
@@ -74,7 +83,7 @@ class NumParser(object):
             min_number_words = clean_words[:clean_words.index(range_denoter)]
             min_val = str(self.parse_num(' '.join(min_number_words))) if len(min_number_words) else ''
             max_val = str(self.parse_num(' '.join(max_number_words))) if len(max_number_words) else ''
-            final_num = RangeValue(self.ureg.Quantity(min_val), self.ureg.Quantity(max_val))
+            final_num = RangeValue(self.ureg.Quantity(min_val + unit_string), self.ureg.Quantity(max_val + unit_string))
             return final_num
 
         #######################################################
@@ -88,13 +97,8 @@ class NumParser(object):
             else:
                 break
 
-        #######################################################
-        # TODO: Check for unit words
-        #######################################################
-
         clean_numbers = clean_words
         is_float_num, dec_word = self.has_float_word(clean_numbers)
-        units = ''
 
         # Error message if the user enters invalid input!
         if len(clean_numbers) == 0:
@@ -135,7 +139,7 @@ class NumParser(object):
         if isNegative:
             final_num = -final_num
 
-        return RangeValue(self.ureg.Quantity(final_num))
+        return RangeValue(self.ureg.Quantity(str(final_num) + unit_string))
 
     def is_phrased_as_decimal_val(self,
                                   clean_words: List[str]) -> bool:
@@ -181,6 +185,7 @@ class NumParser(object):
                word in self.relevant_words or \
                word in self.negative_denoters or \
                word in self.range_denoters or \
+               word in self.unit_denoters or \
                self.is_int(word) or \
                self.is_float(word)
 
@@ -239,6 +244,19 @@ class NumParser(object):
 
         for w in words:
             if w in self.range_denoters:
+                return True, w
+        return False, ''
+
+    def has_unit_word(self,
+                      words: List[str]) -> Tuple[bool, str]:
+        """
+
+        :param words:
+        :return:
+        """
+
+        for w in words:
+            if w in self.unit_denoters:
                 return True, w
         return False, ''
 
