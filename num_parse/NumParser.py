@@ -29,23 +29,18 @@ class NumParser(object):
         self.ureg = UnitRegistry()
 
     def parse_num(self,
-                  number_string: str) -> Union[int, float, RangeValue]:
+                  number_string: str) -> RangeValue:
         """
         Parses a given string containing a numeric value into the raw numeric value.
         :param number_string: A string containing a number.
         :return: The raw numeric value in the given string.
         """
 
-        # TODO: This should very soon return only a RangeValue (and not int/float)
-
         #######################################################
         # Check cases where input is just a number value
         #######################################################
-        if type(number_string) is int:
-            return int(number_string)
-
-        if type(number_string) is float:
-            return float(number_string)
+        if type(number_string) is int or type(number_string) is float:
+            return RangeValue(self.ureg.Quantity(number_string))
 
         #######################################################
         # Clean input string
@@ -55,11 +50,8 @@ class NumParser(object):
         #######################################################
         # Check cases where input is a raw number in a string
         #######################################################
-        if self.is_int(normalized_input):
-            return int(normalized_input)
-
-        if self.is_float(normalized_input):
-            return float(normalized_input)
+        if self.is_int(normalized_input) or self.is_float(normalized_input):
+            return RangeValue(self.ureg.Quantity(normalized_input))
 
         #######################################################
         # Split input into potentially relevant words
@@ -88,7 +80,6 @@ class NumParser(object):
         #######################################################
         # Check if the input is a negative number, as denoted by negative indicator at start of the string
         #######################################################
-
         isNegative = False
         for word in clean_words:
             if word in self.negative_denoters:
@@ -144,7 +135,7 @@ class NumParser(object):
         if isNegative:
             final_num = -final_num
 
-        return final_num
+        return RangeValue(self.ureg.Quantity(final_num))
 
     def is_phrased_as_decimal_val(self,
                                   clean_words: List[str]) -> bool:
