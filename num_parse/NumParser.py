@@ -12,9 +12,10 @@ ASSUMPTIONS:
 
 """
 
+from pint import UnitRegistry
 from typing import Union, List, Tuple
-from word2number import w2n
 import num_parse.word_to_num_values as word_to_num_values
+from num_parse.RangeValue import RangeValue
 
 class NumParser(object):
     def __init__(self):
@@ -24,17 +25,18 @@ class NumParser(object):
         self.relevant_words = []
         self.decimal_denoters = ['point', 'dot', '.']
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
+        self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
+        self.ureg = UnitRegistry()
 
     def parse_num(self,
-                  number_string: str) -> Union[int, float]:
+                  number_string: str) -> Union[int, float, RangeValue]:
         """
         Parses a given string containing a numeric value into the raw numeric value.
         :param number_string: A string containing a number.
         :return: The raw numeric value in the given string.
         """
 
-        # FOR COMPARISON PURPOSES ONLY
-        # return w2n.word_to_num(number_string)
+        # TODO: This should very soon return only a RangeValue (and not int/float)
 
         #######################################################
         # Check cases where input is just a number value
@@ -70,8 +72,23 @@ class NumParser(object):
             raise ValueError("No relevant words/numbers in the given string!")
 
         #######################################################
+        # Handle value ranges
+        #######################################################
+        # TODO: Add unit tests RangeValue parsing
+        is_num_range, range_denoter = self.has_number_range(clean_words)
+        if is_num_range:
+            # Mirror the float number code here, but split on the range_denoter word, and stick the values in a RangeValue
+            max_number_words = clean_words[clean_words.index(range_denoter) + 1:]
+            min_number_words = clean_words[:clean_words.index(range_denoter)]
+            min_val = str(self.parse_num(' '.join(min_number_words))) if len(min_number_words) else ''
+            max_val = str(self.parse_num(' '.join(max_number_words))) if len(max_number_words) else ''
+            final_num = RangeValue(self.ureg.Quantity(min_val), self.ureg.Quantity(max_val))
+            return final_num
+
+        #######################################################
         # Check if the input is a negative number, as denoted by negative indicator at start of the string
         #######################################################
+
         isNegative = False
         for word in clean_words:
             if word in self.negative_denoters:
@@ -86,7 +103,6 @@ class NumParser(object):
 
         clean_numbers = clean_words
         is_float_num, dec_word = self.has_float_word(clean_numbers)
-        is_num_range = False
         units = ''
 
         # Error message if the user enters invalid input!
@@ -111,8 +127,6 @@ class NumParser(object):
                 final_num = 0.0
             else:
                 final_num = float(final_num_string)
-
-        # TODO: CASE 2: NUMBER RANGE
 
         # BASE CASE
         else:
@@ -175,9 +189,9 @@ class NumParser(object):
         return word in self.number_words.keys() or \
                word in self.relevant_words or \
                word in self.negative_denoters or \
+               word in self.range_denoters or \
                self.is_int(word) or \
                self.is_float(word)
-
 
     def is_float(self,
                  s: str) -> bool:
@@ -224,6 +238,18 @@ class NumParser(object):
                 return True, w
         return False, ''
 
+    def has_number_range(self,
+                         words: List[str]) -> Tuple[bool, str]:
+        """
+
+        :param words:
+        :return:
+        """
+
+        for w in words:
+            if w in self.range_denoters:
+                return True, w
+        return False, ''
 
     def number_formation(self,
                          number_words: List[str]) -> float:

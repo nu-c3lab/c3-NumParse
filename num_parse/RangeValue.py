@@ -26,6 +26,10 @@ class RangeValue:
         # Ensure units of the two values are the same
         assert self.min_val.is_compatible_with(self.max_val)
 
+        # Ensure the min and max values are in the appropriate order
+        if self.min_val > self.max_val:
+            self.min_val, self.max_val = self.max_val, self.min_val
+
     def __repr__(self):
         return '<RangeValue({}, {})>'.format(self.min_val.__repr__(), self.max_val.__repr__())
 
@@ -45,6 +49,7 @@ class RangeValue:
     # COMPARISON OPERATORS
     ########################################################
     # TODO: Add unit tests for the RangeValue vs RangeValue cases
+    # TODO: Might need to special case this for integer/floats vs. pint.Quantity so we look at just the min_val.magnitude when comparing
     def __eq__(self, other):
         if type(other) == RangeValue:
             return self.min_val == other.min_val and self.max_val == other.max_val
