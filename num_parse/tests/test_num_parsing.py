@@ -257,10 +257,76 @@ class TestNumParse(unittest.TestCase):
         self.assertEqual(self.num_parser.parse_num('-72 through 0'), rv)
 
     #######################################################
-    # TODO: Units
+    # Units
     #######################################################
 
+    def test_five_meters(self):
+        rv = RangeValue(self.Q_('5 meters'))
+        self.assertEqual(self.num_parser.parse_num('five meters'), rv)
 
+    def test_5_meters(self):
+        rv = RangeValue(self.Q_('5 meters'))
+        self.assertEqual(self.num_parser.parse_num('5 meters'), rv)
+
+    def test_5_m(self):
+        rv = RangeValue(self.Q_('5 meters'))
+        self.assertEqual(self.num_parser.parse_num('5 m'), rv)
+
+    def test_4_cm(self):
+        rv = RangeValue(self.Q_('4 cm'))
+        self.assertEqual(self.num_parser.parse_num('4 cm'), rv)
+
+    def test_4_centimeters(self):
+        rv = RangeValue(self.Q_('4 cm'))
+        self.assertEqual(self.num_parser.parse_num('4 centimeters'), rv)
+
+    def test_3_km(self):
+        rv = RangeValue(self.Q_('3 km'))
+        self.assertEqual(self.num_parser.parse_num('3 km'), rv)
+
+    def test_3_kilometers(self):
+        rv = RangeValue(self.Q_('3 km'))
+        self.assertEqual(self.num_parser.parse_num('3 kilometers'), rv)
+
+    def test_120_seconds(self):
+        rv = RangeValue(self.Q_('120 seconds'))
+        self.assertEqual(self.num_parser.parse_num('120 seconds'), rv)
+
+    def test_120_s(self):
+        rv = RangeValue(self.Q_('120 s'))
+        self.assertEqual(self.num_parser.parse_num('120 s'), rv)
+
+    def test_12_000_ms(self):
+        rv = RangeValue(self.Q_('12000 ms'))
+        self.assertEqual(self.num_parser.parse_num('12,000 ms'), rv)
+
+    def test_12_to_500_ms(self):
+        rv = RangeValue(self.Q_('12 ms'), self.Q_('500 ms'))
+        self.assertEqual(self.num_parser.parse_num('12 to 500 ms'), rv)
+
+    def test_10_degrees_Fahrenheit(self):
+        rv = RangeValue(self.Q_('10 fahrenheit'))
+        self.assertEqual(self.num_parser.parse_num('10 Fahrenheit'), rv)
+
+    def test_10_degrees_Celsius(self):
+        rv = RangeValue(self.Q_('10 celsius'))
+        self.assertEqual(self.num_parser.parse_num('10 Celsius'), rv)
+
+    def test_10_to_20_celsius(self):
+        rv = RangeValue(self.Q_('10'), self.Q_('20 celsius'))
+        self.assertEqual(self.num_parser.parse_num('10 to 20 celsius'), rv)
+
+    def test_10_celsius_to_20_celsius(self):
+        rv = RangeValue(self.Q_('10 celsius'), self.Q_('20 celsius'))
+        self.assertEqual(self.num_parser.parse_num('10 celsius to 20 celsius'), rv)
+
+    def test_1028_to_1220_km(self):
+        rv = RangeValue(self.Q_('1028'), self.Q_('1220 kilometers'))
+        self.assertEqual(self.num_parser.parse_num('1028 to 1220 km'), rv)
+
+    def test_1028_km_to_1220_km(self):
+        rv = RangeValue(self.Q_('1028 kilometers'), self.Q_('1220 kilometers'))
+        self.assertEqual(self.num_parser.parse_num('1028 km to 1220 km'), rv)
 
     #######################################################
     # TODO: More involved strings (e.g. "It has a value between five to ten")

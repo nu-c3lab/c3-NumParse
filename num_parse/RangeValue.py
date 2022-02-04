@@ -7,6 +7,7 @@ A class for modeling range values with units associated with them.
 Author(s): Marko Sterbentz / C3
 
 TODO: Add function to convert to other units (e.g. 5 to 10 cm ==> 1.97 to 3.94 inches)
+TODO: Improve handling of temperature units (e.g. 5 degrees Fahrenehit
 
 """
 
@@ -17,14 +18,15 @@ class RangeValue:
                  min_val: pint.Quantity,
                  max_val: pint.Quantity = None):
         self.min_val = min_val
-        self.max_val = max_val if max_val else min_val
+        self.max_val = max_val if max_val is not None else min_val
 
         # If either one of the Quantities is unitless, then add the units of the other Quantity to it
-        if self.max_val and self.max_val.unitless:
-            self.max_val *= self.min_val.units
+        if self.max_val is not None and self.max_val.unitless:
+            self.max_val._units = self.min_val._units
 
-        if self.min_val.unitless and self.max_val and self.max_val.units:
-            self.min_val *= self.max_val.units
+        if self.min_val.unitless and self.max_val is not None and self.max_val.units:
+            # self.min_val *= self.max_val.units
+            self.min_val._units = self.max_val._units
 
         # Ensure units of the two values are the same
         assert self.min_val.is_compatible_with(self.max_val)

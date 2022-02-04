@@ -11,7 +11,6 @@ ASSUMPTIONS:
 2. We assume only one sentence as a time will be provided to the parser.
 
 TODO: Add '-' as a valid range denoter (e.g. 5-10 seconds ==> 5 to 10 second)
-TODO: Finish adding comments and doc strings to code
 
 """
 
@@ -31,8 +30,7 @@ class NumParser(object):
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
         self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
-        self.ureg = UnitRegistry(str(units_path))
-
+        self.ureg = UnitRegistry(str(units_path), autoconvert_offset_to_baseunit=True)
 
     def parse_num(self,
                   number_string: str) -> RangeValue:
@@ -142,7 +140,7 @@ class NumParser(object):
         if isNegative:
             final_num = -final_num
 
-        return RangeValue(self.ureg.Quantity(str(final_num) + unit_string))
+        return RangeValue(self.ureg.Quantity(final_num,  unit_string))
 
     def is_phrased_as_decimal_val(self,
                                   clean_words: List[str]) -> bool:
