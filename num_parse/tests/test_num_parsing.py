@@ -1,10 +1,12 @@
 import unittest
 from num_parse.NumParser import NumParser
+from num_parse.RangeValue import RangeValue
 
 class TestNumParse(unittest.TestCase):
 
     def setUp(self):
         self.num_parser = NumParser()
+        self.Q_ = self.num_parser.ureg.Quantity
 
     #######################################################
     # ONLY number words
@@ -182,8 +184,88 @@ class TestNumParse(unittest.TestCase):
     # Value Ranges
     #######################################################
 
-    # def test_one_to_five(self):
-    #     self.assertEqual(self.num_parser.parse_num('one to five'), Number(1,5))
+    def test_one_to_five(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('one to five'), rv)
+
+    def test_one_through_five(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('one through five'), rv)
+
+    def test_1_to_5(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('1 to 5'), rv)
+
+    def test_1_through_5(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('1 through 5'), rv)
+
+    def test_1_to_five(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('1 to five'), rv)
+
+    def test_1_through_five(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('1 through five'), rv)
+
+    def test_one_to_5(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('one to 5'), rv)
+
+    def test_one_through_5(self):
+        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        self.assertEqual(self.num_parser.parse_num('one to 5'), rv)
+
+    def test_negative_1_to_negative_5(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('-1 to -5'), rv)
+
+    def test_negative_1_through_negative_5(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('-1 through -5'), rv)
+
+    def test_negative_1_to_negative_5_v2(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('negative 1 to negative 5'), rv)
+
+    def test_negative_1_through_negative_5_v2(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('negative 1 through negative 5'), rv)
+
+    def test_negative_one_to_negative_five(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('negative one to negative five'), rv)
+
+    def test_negative_one_through_negative_five(self):
+        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        self.assertEqual(self.num_parser.parse_num('negative one through negative five'), rv)
+
+    def test_0_to_72(self):
+        rv = RangeValue(self.Q_('0'), self.Q_('72'))
+        self.assertEqual(self.num_parser.parse_num('0 to 72'), rv)
+
+    def test_0_through_72(self):
+        rv = RangeValue(self.Q_('0'), self.Q_('72'))
+        self.assertEqual(self.num_parser.parse_num('0 through 72'), rv)
+
+    def test_negative_72_to_0(self):
+        rv = RangeValue(self.Q_('-72'), self.Q_('0'))
+        self.assertEqual(self.num_parser.parse_num('-72 to 0'), rv)
+
+    def test_negative_72_through_0(self):
+        rv = RangeValue(self.Q_('-72'), self.Q_('0'))
+        self.assertEqual(self.num_parser.parse_num('-72 through 0'), rv)
+
+    #######################################################
+    # TODO: Units
+    #######################################################
+
+
+
+    #######################################################
+    # TODO: More involved strings (e.g. "It has a value between five to ten")
+    #######################################################
+
 
     #######################################################
     # Testing Errors

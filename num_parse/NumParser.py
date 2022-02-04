@@ -10,6 +10,9 @@ ASSUMPTIONS:
 1. We assume the use of the American number system and its associated standards.
 2. We assume only one sentence as a time will be provided to the parser.
 
+TODO: Add '-' as a valid range denoter (e.g. 5-10 seconds ==> 5 to 10 second)
+TODO: Finish adding comments and doc strings to code
+
 """
 
 from pathlib import Path
@@ -29,7 +32,7 @@ class NumParser(object):
         self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
         self.ureg = UnitRegistry(str(units_path))
-        self.unit_denoters = [x for x in self.ureg._units]
+
 
     def parse_num(self,
                   number_string: str) -> RangeValue:
@@ -69,23 +72,21 @@ class NumParser(object):
         #######################################################
         # Check for unit words
         #######################################################
-        # TODO: Add unit tests for unit parsing
-        # TODO: Figure out how to handle plurals of the units (lemmatize the word first before checking if it's in the set?)
-        # TODO: Figure out how to handles pre-fixed units (like cm, mm, etc.)
         has_units, unit_string = self.has_unit_word(clean_words)
 
         #######################################################
         # Handle value ranges
         #######################################################
-        # TODO: Add unit tests RangeValue parsing
         is_num_range, range_denoter = self.has_number_range(clean_words)
         if is_num_range:
             # Mirror the float number code here, but split on the range_denoter word, and stick the values in a RangeValue
             max_number_words = clean_words[clean_words.index(range_denoter) + 1:]
             min_number_words = clean_words[:clean_words.index(range_denoter)]
-            min_val = str(self.parse_num(' '.join(min_number_words))) if len(min_number_words) else ''
-            max_val = str(self.parse_num(' '.join(max_number_words))) if len(max_number_words) else ''
-            final_num = RangeValue(self.ureg.Quantity(min_val + unit_string), self.ureg.Quantity(max_val + unit_string))
+            min_val = str(self.parse_num(' '.join(min_number_words)).min_val.m) if len(min_number_words) else ''
+            max_val = str(self.parse_num(' '.join(max_number_words)).max_val.m) if len(max_number_words) else ''
+            q1 = self.ureg.Quantity(min_val + unit_string)
+            q2 = self.ureg.Quantity(max_val + unit_string)
+            final_num = RangeValue(q1, q2)
             return final_num
 
         #######################################################
@@ -150,9 +151,9 @@ class NumParser(object):
     def normalize_input(self,
                         number_string: str) -> str:
         """
-
-        :param number_string:
-        :return:
+        Cleans up the input string and puts it into a standard form for parsing.
+        :param number_string: The string to be cleaned.
+        :return: The cleaned/normalized version of the input string.
         """
 
         # Strip whitespace from beginning and end
@@ -170,24 +171,25 @@ class NumParser(object):
                    word: str) -> str:
         """
         Function to clean a single word into a usable form.
-        :param word:
-        :return:
+        :param word: The string/word to be cleaned.
+        :return: The cleaned word.
         """
+
         return word.replace(',', '')
 
     def is_relevant_word(self,
                          word: str) -> bool:
         """
-
-        :param word:
-        :return:
+        Checks if the given word is a word that is useful for further analysis and parsing.
+        :param word: The word to check.
+        :return: A boolean denoting if the word is useful for further analysis and parsing.
         """
 
         return word in self.number_words.keys() or \
                word in self.relevant_words or \
                word in self.negative_denoters or \
                word in self.range_denoters or \
-               word in self.unit_denoters or \
+               self.ureg.parse_unit_name(word) or \
                self.is_int(word) or \
                self.is_float(word)
 
@@ -239,9 +241,9 @@ class NumParser(object):
     def has_number_range(self,
                          words: List[str]) -> Tuple[bool, str]:
         """
-
-        :param words:
-        :return:
+        Checks if a list of words has a word denoting a range of values is present.
+        :param words: The list of words to check.
+        :return: A boolean denoting the words contain a range, as well as what word signaled this.
         """
 
         for w in words:
@@ -252,23 +254,24 @@ class NumParser(object):
     def has_unit_word(self,
                       words: List[str]) -> Tuple[bool, str]:
         """
-
-        :param words:
-        :return:
+        Checks if a list of words has a word denoting units are present.
+        :param words: The list of words to check.
+        :return: A boolean denoting the words contains units, as well as the unit word.
         """
 
         for w in words:
-            if w in self.unit_denoters:
+            if self.ureg.parse_unit_name(w):
                 return True, w
         return False, ''
 
     def number_formation(self,
                          number_words: List[str]) -> float:
         """
-
-        :param number_words:
-        :return:
+        Generates a single number from a list of words/numbers.
+        :param number_words: The list of words to convert to a single number.
+        :return: A float representing the number in the string.
         """
+
         numbers = []
         for number_word in number_words:
             if number_word in self.number_words:
@@ -293,9 +296,10 @@ class NumParser(object):
                         decimal_digit_words: List[str],
                         as_float: bool = True) -> Union[float, int]:
         """
-
-        :param decimal_digit_words:
-        :return:
+        Converts a list of words to a decimal sum.
+        :param decimal_digit_words: The list of words to convert to a decimal value.
+        :param as_float: Optional param specifying whether the final value should contain the decimal point or not.
+        :return: The value denoted by the given words.
         """
 
         decimal_number_str = []
@@ -314,9 +318,10 @@ class NumParser(object):
     def get_integral_sum(self,
                          clean_numbers: List[str]) -> int:
         """
-
-        :param clean_numbers:
-        :return:
+        Converts a list of words to an integer number.
+        Assumes these numbers would be to the right of a decimal point.
+        :param clean_numbers: The list of numbers to convert to the integer value.
+        :return: The value denoted by the given words.
         """
 
         total_sum = 0

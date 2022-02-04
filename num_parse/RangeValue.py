@@ -5,6 +5,9 @@ January 30, 2022
 A class for modeling range values with units associated with them.
 
 Author(s): Marko Sterbentz / C3
+
+TODO: Add function to convert to other units (e.g. 5 to 10 cm ==> 1.97 to 3.94 inches)
+
 """
 
 import pint
