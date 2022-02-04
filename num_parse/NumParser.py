@@ -12,6 +12,7 @@ ASSUMPTIONS:
 
 """
 
+from pathlib import Path
 from pint import UnitRegistry
 from typing import Union, List, Tuple
 import num_parse.word_to_num_values as word_to_num_values
@@ -26,7 +27,8 @@ class NumParser(object):
         self.decimal_denoters = ['point', 'dot', '.']
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
         self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
-        self.ureg = UnitRegistry()
+        units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
+        self.ureg = UnitRegistry(str(units_path))
         self.unit_denoters = [x for x in self.ureg._units]
 
     def parse_num(self,
