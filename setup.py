@@ -5,7 +5,7 @@ with open('requirements.txt', 'r') as requirements:
 
 setup(
     name='c3-NumParse',
-    version='0.0.1',
+    version='0.0.2',
     author='C3 Lab',
     author_email='markosterbentz2023@u.northwestern.edu',
     description='A package for performing numeric parsing.',
