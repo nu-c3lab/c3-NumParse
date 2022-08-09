@@ -19,6 +19,8 @@
 # Example:
 #     millennium = 1e3 * year = _ = millennia
 #
+# Multi-word unit definitions need to be separated by an underscore (_).
+# Underscores also need to be used to separate symbols used in units (e.g., "°F" -> "°_F").
 #
 # Prefixes
 # --------
@@ -106,10 +108,11 @@ ampere = [current] = A = amp
 candela = [luminosity] = cd = candle
 gram = [mass] = g
 mole = [substance] = mol
-kelvin = [temperature]; offset: 0 = K = degK = °K = degree_Kelvin = degreeK  # older names supported for compatibility
+kelvin = [temperature]; offset: 0 = K = degK = °_K = degree_Kelvin = degree_K  # older names supported for compatibility
 radian = [] = rad
 bit = []
 count = []
+dollar = [currency] = usd = $
 
 
 #### CONSTANTS ####
@@ -157,6 +160,7 @@ angstrom_star = K_alpha_W_d_220 * d_220 / 0.2090100 = Å_star
 planck_length = (hbar * gravitational_constant / c ** 3) ** 0.5
 
 # Mass
+kilogram = 1e3 * gram = kg = kilo
 metric_ton = 1e3 * kilogram = t = tonne
 unified_atomic_mass_unit = atomic_mass_constant = u = amu
 dalton = atomic_mass_constant = Da
@@ -171,7 +175,7 @@ hour = 60 * minute = hr
 day = 24 * hour = d
 week = 7 * day
 fortnight = 2 * week
-year = 365.25 * day = a = yr = julian_year
+year = 365.25 * day = yr = julian_year
 month = year / 12
 
 # decade = 10 * year
@@ -195,10 +199,10 @@ synodic_month = 29.530589 * day = _ = lunar_month  # approximate
 planck_time = (hbar * gravitational_constant / c ** 5) ** 0.5
 
 # Temperature
-degree_Celsius = kelvin; offset: 273.15 = °C = celsius = degC = degreeC
-degree_Rankine = 5 / 9 * kelvin; offset: 0 = °R = rankine = degR = degreeR
-degree_Fahrenheit = 5 / 9 * kelvin; offset: 233.15 + 200 / 9 = °F = fahrenheit = degF = degreeF
-degree_Reaumur = 4 / 5 * kelvin; offset: 273.15 = °Re = reaumur = degRe = degreeRe = degree_Réaumur = réaumur
+degree_Celsius = kelvin; offset: 273.15 = °_C = celsius = degC = degree_C
+degree_Rankine = 5 / 9 * kelvin; offset: 0 = °_R = rankine = degR = degree_R
+degree_Fahrenheit = 5 / 9 * kelvin; offset: 233.15 + 200 / 9 = °_F = fahrenheit = degF = degree_F
+degree_Reaumur = 4 / 5 * kelvin; offset: 273.15 = °_Re = reaumur = degRe = degree_Re = degree_Réaumur = réaumur
 atomic_unit_of_temperature = E_h / k = a_u_temp
 planck_temperature = (hbar * c ** 5 / gravitational_constant / k ** 2) ** 0.5
 
@@ -219,8 +223,8 @@ stere = meter ** 3
 # Frequency
 [frequency] = 1 / [time]
 hertz = 1 / second = Hz
-revolutions_per_minute = revolution / minute = rpm
-revolutions_per_second = revolution / second = rps
+revolution_per_minute = revolution / minute = rpm
+revolution_per_second = revolution / second = rps
 counts_per_second = count / second = cps
 
 # Wavenumber

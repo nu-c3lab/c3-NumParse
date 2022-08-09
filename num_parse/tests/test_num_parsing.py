@@ -6,7 +6,7 @@ class TestNumParse(unittest.TestCase):
 
     def setUp(self):
         self.num_parser = NumParser()
-        self.Q_ = self.num_parser.ureg.Quantity
+        self.Q_ = self.num_parser.Quantity
 
     #######################################################
     # ONLY number words
@@ -52,7 +52,7 @@ class TestNumParse(unittest.TestCase):
         self.assertEqual(self.num_parser.parse_num('one hundred twenty three million four hundred fifty six thousand seven hundred and eighty nine'), 123456789)
 
     def test_billion(self):
-            self.assertEqual(self.num_parser.parse_num('billion'), 1000000000)
+        self.assertEqual(self.num_parser.parse_num('billion'), 1000000000)
 
     def test_three_billion(self):
         self.assertEqual(self.num_parser.parse_num('three billion'), 3000000000)
@@ -72,6 +72,9 @@ class TestNumParse(unittest.TestCase):
 
     def test_112_as_int(self):
         self.assertEqual(self.num_parser.parse_num(112), 112)
+
+    def test_112_with_hyphen(self):
+        self.assertEqual(self.num_parser.parse_num('112-'), 112)
 
     def test_11211234(self):
         self.assertEqual(self.num_parser.parse_num('11211234'), 11211234)
@@ -185,148 +188,207 @@ class TestNumParse(unittest.TestCase):
     #######################################################
 
     def test_one_to_five(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('one to five'), rv)
 
     def test_one_through_five(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('one through five'), rv)
 
     def test_1_to_5(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('1 to 5'), rv)
 
     def test_1_through_5(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('1 through 5'), rv)
 
     def test_1_to_five(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('1 to five'), rv)
 
     def test_1_through_five(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('1 through five'), rv)
 
     def test_one_to_5(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('one to 5'), rv)
 
     def test_one_through_5(self):
-        rv = RangeValue(self.Q_('1'), self.Q_('5'))
+        rv = RangeValue(self.Q_(1), self.Q_(5))
         self.assertEqual(self.num_parser.parse_num('one to 5'), rv)
 
     def test_negative_1_to_negative_5(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('-1 to -5'), rv)
 
     def test_negative_1_through_negative_5(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('-1 through -5'), rv)
 
     def test_negative_1_to_negative_5_v2(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('negative 1 to negative 5'), rv)
 
     def test_negative_1_through_negative_5_v2(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('negative 1 through negative 5'), rv)
 
     def test_negative_one_to_negative_five(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('negative one to negative five'), rv)
 
     def test_negative_one_through_negative_five(self):
-        rv = RangeValue(self.Q_('-1'), self.Q_('-5'))
+        rv = RangeValue(self.Q_(-1), self.Q_(-5))
         self.assertEqual(self.num_parser.parse_num('negative one through negative five'), rv)
 
     def test_0_to_72(self):
-        rv = RangeValue(self.Q_('0'), self.Q_('72'))
+        rv = RangeValue(self.Q_(0), self.Q_(72))
         self.assertEqual(self.num_parser.parse_num('0 to 72'), rv)
 
     def test_0_through_72(self):
-        rv = RangeValue(self.Q_('0'), self.Q_('72'))
+        rv = RangeValue(self.Q_(0), self.Q_(72))
         self.assertEqual(self.num_parser.parse_num('0 through 72'), rv)
 
     def test_negative_72_to_0(self):
-        rv = RangeValue(self.Q_('-72'), self.Q_('0'))
+        rv = RangeValue(self.Q_(-72), self.Q_(0))
         self.assertEqual(self.num_parser.parse_num('-72 to 0'), rv)
 
     def test_negative_72_through_0(self):
-        rv = RangeValue(self.Q_('-72'), self.Q_('0'))
+        rv = RangeValue(self.Q_(-72), self.Q_(0))
         self.assertEqual(self.num_parser.parse_num('-72 through 0'), rv)
+
+    def test_12_hyphen_14(self):
+        rv = RangeValue(self.Q_(12), self.Q_(14))
+        self.assertEqual(self.num_parser.parse_num('12 - 14'), rv)
+
+    def test_from_eight_until_ten(self):
+        rv = RangeValue(self.Q_(8), self.Q_(10))
+        self.assertEqual(self.num_parser.parse_num('from eight until ten'), rv)
 
     #######################################################
     # Units
     #######################################################
 
     def test_five_meters(self):
-        rv = RangeValue(self.Q_('5 meters'))
+        rv = RangeValue(self.Q_(5, 'meters'))
         self.assertEqual(self.num_parser.parse_num('five meters'), rv)
 
     def test_5_meters(self):
-        rv = RangeValue(self.Q_('5 meters'))
+        rv = RangeValue(self.Q_(5, 'meters'))
         self.assertEqual(self.num_parser.parse_num('5 meters'), rv)
 
     def test_5_m(self):
-        rv = RangeValue(self.Q_('5 meters'))
+        rv = RangeValue(self.Q_(5, 'meters'))
         self.assertEqual(self.num_parser.parse_num('5 m'), rv)
 
     def test_4_cm(self):
-        rv = RangeValue(self.Q_('4 cm'))
+        rv = RangeValue(self.Q_(4, 'cm'))
         self.assertEqual(self.num_parser.parse_num('4 cm'), rv)
 
     def test_4_centimeters(self):
-        rv = RangeValue(self.Q_('4 cm'))
+        rv = RangeValue(self.Q_(4, 'cm'))
         self.assertEqual(self.num_parser.parse_num('4 centimeters'), rv)
 
     def test_3_km(self):
-        rv = RangeValue(self.Q_('3 km'))
+        rv = RangeValue(self.Q_(3, 'km'))
         self.assertEqual(self.num_parser.parse_num('3 km'), rv)
 
     def test_3_kilometers(self):
-        rv = RangeValue(self.Q_('3 km'))
+        rv = RangeValue(self.Q_(3, 'km'))
         self.assertEqual(self.num_parser.parse_num('3 kilometers'), rv)
 
     def test_120_seconds(self):
-        rv = RangeValue(self.Q_('120 seconds'))
+        rv = RangeValue(self.Q_(120, 'seconds'))
         self.assertEqual(self.num_parser.parse_num('120 seconds'), rv)
 
     def test_120_s(self):
-        rv = RangeValue(self.Q_('120 s'))
+        rv = RangeValue(self.Q_(120, 's'))
         self.assertEqual(self.num_parser.parse_num('120 s'), rv)
 
     def test_12_000_ms(self):
-        rv = RangeValue(self.Q_('12000 ms'))
+        rv = RangeValue(self.Q_(12000, 'ms'))
         self.assertEqual(self.num_parser.parse_num('12,000 ms'), rv)
 
     def test_12_to_500_ms(self):
-        rv = RangeValue(self.Q_('12 ms'), self.Q_('500 ms'))
+        rv = RangeValue(self.Q_(12, 'ms'), self.Q_(500, 'ms'))
         self.assertEqual(self.num_parser.parse_num('12 to 500 ms'), rv)
 
     def test_10_degrees_Fahrenheit(self):
-        rv = RangeValue(self.Q_('10 fahrenheit'))
+        rv = RangeValue(self.Q_(10, 'degree_Fahrenheit'))
         self.assertEqual(self.num_parser.parse_num('10 Fahrenheit'), rv)
 
+    def test_45_degrees_Fahrenheit(self):
+        rv = RangeValue(self.Q_(45, 'degree_Fahrenheit'))
+        self.assertEqual(self.num_parser.parse_num('45 degrees Fahrenheit'), rv)
+
+    def test_45_degree_F(self):
+        rv = RangeValue(self.Q_(45, 'degree_Fahrenheit'))
+        self.assertEqual(self.num_parser.parse_num('45°F'), rv)
+
     def test_10_degrees_Celsius(self):
-        rv = RangeValue(self.Q_('10 celsius'))
+        rv = RangeValue(self.Q_(10, 'degree_Celsius'))
         self.assertEqual(self.num_parser.parse_num('10 Celsius'), rv)
 
     def test_10_to_20_celsius(self):
-        rv = RangeValue(self.Q_('10'), self.Q_('20 celsius'))
+        rv = RangeValue(self.Q_(10), self.Q_(20, 'degree_Celsius'))
         self.assertEqual(self.num_parser.parse_num('10 to 20 celsius'), rv)
 
     def test_10_celsius_to_20_celsius(self):
-        rv = RangeValue(self.Q_('10 celsius'), self.Q_('20 celsius'))
+        rv = RangeValue(self.Q_(10, 'degree_Celsius'), self.Q_(20, 'degree_Celsius'))
         self.assertEqual(self.num_parser.parse_num('10 celsius to 20 celsius'), rv)
 
     def test_1028_to_1220_km(self):
-        rv = RangeValue(self.Q_('1028'), self.Q_('1220 kilometers'))
+        rv = RangeValue(self.Q_(1028), self.Q_(1220, 'kilometers'))
         self.assertEqual(self.num_parser.parse_num('1028 to 1220 km'), rv)
 
     def test_1028_km_to_1220_km(self):
-        rv = RangeValue(self.Q_('1028 kilometers'), self.Q_('1220 kilometers'))
+        rv = RangeValue(self.Q_(1028, 'kilometers'), self.Q_(1220, 'kilometers'))
         self.assertEqual(self.num_parser.parse_num('1028 km to 1220 km'), rv)
+
+    def test_between_six_and_seven_years(self):
+        rv = RangeValue(self.Q_(6, 'years'), self.Q_(7, 'years'))
+        self.assertEqual(self.num_parser.parse_num('between six and seven years'), rv)
+
+    #######################################################
+    # Combination tests
+    #######################################################
+
+    def test_numbers_words_and_units(self):
+        self.assertEqual(self.num_parser.parse_num("4 million miles"),
+                         RangeValue(self.Q_(4000000, 'miles')))
+
+    def test_dolla_dolla_bills_yall(self):
+        self.assertEqual(self.num_parser.parse_num("5 dollars"),
+                         RangeValue(self.Q_(5, 'dollars')))
+        self.assertEqual(self.num_parser.parse_num("$11"),
+                         RangeValue(self.Q_(11, 'dollars')))
+
+    def test_a_dozen_kilos(self):
+        self.assertEqual(self.num_parser.parse_num("a dozen kilos"),
+                         RangeValue(self.Q_(12, 'kilograms')))
+
+    def test_45_metric_tons(self):
+        self.assertEqual(self.num_parser.parse_num("45 metric tons"),
+                         RangeValue(self.Q_(45, 'metric_ton')))
+
+    def test_45_thousand_metric_tons(self):
+        self.assertEqual(self.num_parser.parse_num("45 thousand metric tons"),
+                         RangeValue(self.Q_(45000, 'metric_ton')))
+
+    def test_kips_per_square_inch(self):
+        self.assertEqual(self.num_parser.parse_num("four hundred thirty five or four hundred sixty seven kips per square inch"),
+                         RangeValue(self.Q_(435, 'kip_per_square_inch'), self.Q_(467, 'kip_per_square_inch')))
+
+    def test_irrational_unit_conversion(self):
+        self.assertEqual(self.num_parser.parse_num("2.2046226218487758 pounds"),
+                         RangeValue(self.Q_(1, 'kilogram')))
+        self.assertEqual(self.num_parser.parse_num("2.2046 pounds"),
+                         RangeValue(self.Q_(1, 'kilogram')))
+        self.assertNotEqual(self.num_parser.parse_num("2.205 pounds"),
+                         RangeValue(self.Q_(1, 'kilogram')))
+
 
     #######################################################
     # TODO: More involved strings (e.g. "It has a value between five to ten")
@@ -337,7 +399,6 @@ class TestNumParse(unittest.TestCase):
     # Testing Errors
     #######################################################
     def test_errors(self):
-        self.assertRaises(ValueError, self.num_parser.parse_num, '112-')
         self.assertRaises(ValueError, self.num_parser.parse_num, '-')
         self.assertRaises(ValueError, self.num_parser.parse_num, 'on')
         self.assertRaises(ValueError, self.num_parser.parse_num, 'million million')

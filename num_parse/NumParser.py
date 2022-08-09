@@ -10,15 +10,80 @@ ASSUMPTIONS:
 1. We assume the use of the American number system and its associated standards.
 2. We assume only one sentence as a time will be provided to the parser.
 
-TODO: Add '-' as a valid range denoter (e.g. 5-10 seconds ==> 5 to 10 second)
-
 """
 
 from pathlib import Path
-from pint import UnitRegistry
-from typing import Union, List, Tuple
+import pint
+from pint import UnitRegistry, UndefinedUnitError, OffsetUnitCalculusError, DimensionalityError
+from pint.compat import is_duck_array_type, zero_or_nan
+from pint.definitions import UnitDefinition
+from typing import Union, List, Tuple, Optional
 import num_parse.word_to_num_values as word_to_num_values
 from num_parse.RangeValue import RangeValue
+from functools import reduce
+from io import BytesIO
+import re
+import tokenize
+import numpy as np
+
+MARGIN = 0.0001
+
+def tokenizer(input_string):
+    for tokinfo in tokenize.tokenize(BytesIO(input_string.encode("utf-8")).readline):
+        if tokinfo.type != tokenize.ENCODING:
+            if tokinfo.type == tokenize.ERRORTOKEN and tokinfo.string != ' ':
+                yield tokenize.TokenInfo(type=1, string=tokinfo.string, start=tokinfo.start, end=tokinfo.end, line=tokinfo.line)
+            else:
+                yield tokinfo
+
+# Injecting the above tokenizer into pint :)
+pint.util.tokenizer = tokenizer
+
+class NumUnitRegistry(UnitRegistry):
+
+    def get_name(
+        self, name_or_alias: str, case_sensitive: Optional[bool] = None
+    ) -> str:
+        """Return the canonical name of a unit."""
+
+        if name_or_alias == "dimensionless":
+            return ""
+
+        try:
+            return self._units[name_or_alias].name
+        except KeyError:
+            pass
+
+        candidates = self.parse_unit_name(name_or_alias, case_sensitive) or self.parse_unit_name(name_or_alias, case_sensitive=False)
+        if not candidates:
+            raise UndefinedUnitError(name_or_alias)
+        elif len(candidates) == 1:
+            prefix, unit_name, _ = candidates[0]
+        else:
+            # If multiple, prefer the one with fewest "pieces"
+            prefix, unit_name, _ = sorted(candidates, key=lambda candidate: len([piece for piece in candidate if len(piece)]))[0]
+
+        if prefix:
+            name = prefix + unit_name
+            symbol = self.get_symbol(name, case_sensitive)
+            prefix_def = self._prefixes[prefix]
+            self._units[name] = UnitDefinition(
+                name,
+                symbol,
+                (),
+                prefix_def.converter,
+                self.UnitsContainer({unit_name: 1}),
+            )
+            return prefix + unit_name
+
+        return unit_name
+
+def eq(lhs, rhs, check_all: bool, error_margin: float = 0.0):
+
+    out = abs(lhs - rhs) <= error_margin
+    if check_all and is_duck_array_type(type(out)):
+        return out.all()
+    return out
 
 class NumParser(object):
     def __init__(self):
@@ -28,9 +93,68 @@ class NumParser(object):
         self.relevant_words = []
         self.decimal_denoters = ['point', 'dot', '.']
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
-        self.range_denoters = ['to', 'through']        # TODO: Will want to do regex for this to detect more complex patterns in the string (e.g. "between X and Y")
+        self.range_denoters = ['to', 'through', 'until', 'and', 'or']
+        numeric_capturing_pattern = '(-?[\w\. ]+)'
+        self.range_expressions = [pattern.format(numeric_capturing_pattern) for pattern in [r'between {0} (and) {0}', r'from {0} (until) {0}', r'{0} (or) {0}', r'{0} (to) {0}', r'{0} (through) {0}', r'{0} (-) {0}']]
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
-        self.ureg = UnitRegistry(str(units_path), autoconvert_offset_to_baseunit=True)
+        self.ureg = NumUnitRegistry(str(units_path), autoconvert_offset_to_baseunit=True)
+
+        class Quantity(self.ureg.Quantity):
+
+            def __eq__(self, other):
+                def bool_result(value):
+                    nonlocal other
+
+                    if not is_duck_array_type(type(self._magnitude)):
+                        return value
+
+                    if isinstance(other, Quantity):
+                        other = other._magnitude
+
+                    template, _ = np.broadcast_arrays(self._magnitude, other)
+                    return np.full_like(template, fill_value=value, dtype=np.bool_)
+
+                # We compare to the base class of Quantity because
+                # each Quantity class is unique.
+                if not isinstance(other, Quantity):
+                    if zero_or_nan(other, True):
+                        # Handle the special case in which we compare to zero or NaN
+                        # (or an array of zeros or NaNs)
+                        if self._is_multiplicative:
+                            # compare magnitude
+                            return eq(self._magnitude, other, False)
+                        else:
+                            # compare the magnitude after converting the
+                            # non-multiplicative quantity to base units
+                            if self._REGISTRY.autoconvert_offset_to_baseunit:
+                                return eq(self.to_base_units()._magnitude, other, False, MARGIN)
+                            else:
+                                raise OffsetUnitCalculusError(self._units)
+
+                    if self.dimensionless:
+                        return eq(
+                            self._convert_magnitude_not_inplace(self.UnitsContainer()),
+                            other,
+                            False,
+                            MARGIN
+                        )
+
+                    return bool_result(False)
+
+                if self._units == other._units:
+                    return eq(self._magnitude, other._magnitude, False, MARGIN)
+
+                try:
+                    return eq(
+                        self._convert_magnitude_not_inplace(other._units),
+                        other._magnitude,
+                        False,
+                        MARGIN
+                    )
+                except DimensionalityError:
+                    return bool_result(False)
+
+        self.Quantity = Quantity
 
     def parse_num(self,
                   number_string: str) -> RangeValue:
@@ -43,8 +167,8 @@ class NumParser(object):
         #######################################################
         # Check cases where input is just a number value
         #######################################################
-        if type(number_string) is int or type(number_string) is float:
-            return RangeValue(self.ureg.Quantity(number_string))
+        if type(number_string) in [int, float]:
+            return RangeValue(self.Quantity(number_string))
 
         #######################################################
         # Clean input string
@@ -55,35 +179,39 @@ class NumParser(object):
         # Check cases where input is a raw number in a string
         #######################################################
         if self.is_int(normalized_input) or self.is_float(normalized_input):
-            return RangeValue(self.ureg.Quantity(normalized_input))
+            return RangeValue(self.Quantity(normalized_input))
 
         #######################################################
         # Split input into potentially relevant words
         #######################################################
-        split_words = normalized_input.split()
-        useful_words = [word for word in split_words if self.is_relevant_word(word)]
-        clean_words = [self.clean_word(word) for word in useful_words]
+        # clean_words = [self.clean_word(word) for word in normalized_input.split()]
+        clean_words = [self.clean_word(tok.string) for tok in tokenizer(normalized_input) if tok.line and tok.type != tokenize.ERRORTOKEN]
 
-        if len(useful_words) == 0:
+        if len(clean_words) == 0:
             raise ValueError("No relevant words/numbers in the given string!")
 
         #######################################################
         # Check for unit words
         #######################################################
-        has_units, unit_string = self.has_unit_word(clean_words)
-
+        unit_span, unit_string = self.has_unit_word(clean_words, True)
+        if not unit_string:
+            unit_span, unit_string = self.has_unit_word(clean_words, False)
+        if unit_string:
+            clean_words = clean_words[:unit_span[0]] + clean_words[unit_span[1]:]
+        final_words = [word for word in clean_words if self.is_relevant_word(word)]
         #######################################################
         # Handle value ranges
         #######################################################
-        is_num_range, range_denoter = self.has_number_range(clean_words)
-        if is_num_range:
+        # is_num_range, range_denoter = self.has_number_range(clean_words)
+        range_denoter, min_number_words, max_number_words = self.get_number_range(' '.join(clean_words))
+        if range_denoter:
             # Mirror the float number code here, but split on the range_denoter word, and stick the values in a RangeValue
-            max_number_words = clean_words[clean_words.index(range_denoter) + 1:]
-            min_number_words = clean_words[:clean_words.index(range_denoter)]
-            min_val = str(self.parse_num(' '.join(min_number_words)).min_val.m) if len(min_number_words) else ''
-            max_val = str(self.parse_num(' '.join(max_number_words)).max_val.m) if len(max_number_words) else ''
-            q1 = self.ureg.Quantity(min_val + unit_string)
-            q2 = self.ureg.Quantity(max_val + unit_string)
+            # max_number_words = clean_words[clean_words.index(range_denoter) + 1:]
+            # min_number_words = clean_words[:clean_words.index(range_denoter)]
+            min_val = self.parse_num(' '.join(min_number_words)).min_val.m if len(min_number_words) else ''
+            max_val = self.parse_num(' '.join(max_number_words)).max_val.m if len(max_number_words) else ''
+            q1 = self.Quantity(min_val, unit_string)
+            q2 = self.Quantity(max_val, unit_string)
             final_num = RangeValue(q1, q2)
             return final_num
 
@@ -91,14 +219,11 @@ class NumParser(object):
         # Check if the input is a negative number, as denoted by negative indicator at start of the string
         #######################################################
         isNegative = False
-        for word in clean_words:
-            if word in self.negative_denoters:
-                isNegative = not isNegative
-                clean_words.remove(word)
-            else:
-                break
+        while final_words and final_words[0] in self.negative_denoters:
+            final_words.pop(0)
+            isNegative = not isNegative
 
-        clean_numbers = clean_words
+        clean_numbers = final_words
         is_float_num, dec_word = self.has_float_word(clean_numbers)
 
         # Error message if the user enters invalid input!
@@ -140,11 +265,11 @@ class NumParser(object):
         if isNegative:
             final_num = -final_num
 
-        return RangeValue(self.ureg.Quantity(final_num,  unit_string))
+        return RangeValue(self.Quantity(final_num,  unit_string))
 
     def is_phrased_as_decimal_val(self,
-                                  clean_words: List[str]) -> bool:
-        return all(w in self.decimal_words for w in clean_words)
+                                  words: List[str]) -> bool:
+        return all(w in self.decimal_words for w in words)
 
     def normalize_input(self,
                         number_string: str) -> str:
@@ -158,10 +283,13 @@ class NumParser(object):
         cleaned_string = number_string.strip()
 
         # Lowercase the string
-        cleaned_string = cleaned_string.lower()
+        # cleaned_string = cleaned_string.lower() # don't do this - the unit definitions are case sensitive
 
         # Remove commas
         cleaned_string = cleaned_string.replace(',', '')
+
+        # Replace hyphens in spelled out words with spaces (e.g., "thirty-five" -> "thirty five")
+        cleaned_string = re.sub(r'([a-zA-Z]+)-([a-zA-Z]+)', r'\1 \2', cleaned_string)
 
         return cleaned_string
 
@@ -187,7 +315,6 @@ class NumParser(object):
                word in self.relevant_words or \
                word in self.negative_denoters or \
                word in self.range_denoters or \
-               self.ureg.parse_unit_name(word) or \
                self.is_int(word) or \
                self.is_float(word)
 
@@ -214,8 +341,6 @@ class NumParser(object):
         :param s: The string to be checked.
         :return: Boolean denoting whether the string can be converted to a integer.
         """
-
-        # TODO: Do a little string pre-processing to detect cases like "--1"?
 
         try:
             int(s)
@@ -249,18 +374,42 @@ class NumParser(object):
                 return True, w
         return False, ''
 
+    def get_number_range(self,
+                         text: str) -> Tuple[str, type(None)]:
+        """
+        Checks if a list of words has a word denoting a range of values is present, and if so
+        gets the corresponding range and range value.
+        :param text: The text to check.
+        :return: The range value and minimum/maximum of that range if found. Otherwise None.
+        """
+
+        for pattern in self.range_expressions:
+            match = re.search(pattern, text)
+            if match:
+                return (match.group(2), match.group(1).split(), match.group(3).split())
+        return None, None, None
+
     def has_unit_word(self,
-                      words: List[str]) -> Tuple[bool, str]:
+                      words: List[str],
+                      case_sensitive: bool) -> Tuple[bool, str]:
         """
         Checks if a list of words has a word denoting units are present.
         :param words: The list of words to check.
-        :return: A boolean denoting the words contains units, as well as the unit word.
+        :param case_sensitive: Whether the unit search should be case_sensitive
+        :return: the original span of the unit word, as well as the unit itself
         """
 
-        for w in words:
-            if self.ureg.parse_unit_name(w):
-                return True, w
-        return False, ''
+        for gram_size in range(len(words)-1, 0, -1):
+            for i in range(len(words) - gram_size + 1):
+                gram = '_'.join(words[i:i+gram_size])
+                if self.ureg.parse_unit_name(gram, case_sensitive=case_sensitive):
+                    return (i,i+gram_size), gram
+                # Also try removing the letter "s" when it is not at the end
+                for j in range(gram_size - 1):
+                    gram = '_'.join(words[i:i+j] + [words[i+j].rstrip('s')] + words[i+j+1:i+gram_size])
+                    if self.ureg.parse_unit_name(gram, case_sensitive=case_sensitive):
+                        return (i,i+gram_size), gram
+        return None, None
 
     def number_formation(self,
                          number_words: List[str]) -> float:
@@ -330,6 +479,8 @@ class NumParser(object):
                 total_sum += self.number_words[clean_numbers[0]]
             elif self.is_int(clean_numbers[0]):
                 total_sum += int(clean_numbers[0])
+            elif self.is_float(clean_numbers[0]):
+                total_sum += float(clean_numbers[0])
 
         else:
             billion_index = clean_numbers.index('billion') if 'billion' in clean_numbers else -1
