@@ -205,13 +205,10 @@ class NumParser(object):
         # is_num_range, range_denoter = self.has_number_range(clean_words)
         range_denoter, min_number_words, max_number_words = self.get_number_range(' '.join(clean_words))
         if range_denoter:
-            # Mirror the float number code here, but split on the range_denoter word, and stick the values in a RangeValue
-            # max_number_words = clean_words[clean_words.index(range_denoter) + 1:]
-            # min_number_words = clean_words[:clean_words.index(range_denoter)]
-            min_val = self.parse_num(' '.join(min_number_words)).min_val.m if len(min_number_words) else ''
-            max_val = self.parse_num(' '.join(max_number_words)).max_val.m if len(max_number_words) else ''
-            q1 = self.Quantity(min_val, unit_string)
-            q2 = self.Quantity(max_val, unit_string)
+            min_val = self.parse_num(' '.join(min_number_words)).min_val if len(min_number_words) else ''
+            max_val = self.parse_num(' '.join(max_number_words)).max_val if len(max_number_words) else ''
+            q1 = self.Quantity(min_val.m, unit_string) if min_val.unitless else min_val
+            q2 = self.Quantity(max_val.m, unit_string) if max_val.unitless else max_val
             final_num = RangeValue(q1, q2)
             return final_num
 

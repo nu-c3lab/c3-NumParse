@@ -35,6 +35,11 @@ class RangeValue:
         if self.min_val > self.max_val:
             self.min_val, self.max_val = self.max_val, self.min_val
 
+        # If units differ, convert them to an SI unit
+        if not (self.min_val.unitless or self.max_val.unitless) and self.min_val.units != self.max_val.units:
+            self.min_val.ito_base_units()
+            self.max_val.ito_base_units()
+
     def __repr__(self):
         return '<RangeValue({}, {})>'.format(self.min_val.__repr__(), self.max_val.__repr__())
 

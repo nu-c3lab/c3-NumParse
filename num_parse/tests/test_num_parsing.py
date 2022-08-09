@@ -389,6 +389,10 @@ class TestNumParse(unittest.TestCase):
         self.assertNotEqual(self.num_parser.parse_num("2.205 pounds"),
                          RangeValue(self.Q_(1, 'kilogram')))
 
+    def test_range_of_different_units(self):
+        self.assertEqual(self.num_parser.parse_num("five hundred kilograms to fifteen hundred pounds"),
+                         RangeValue(self.Q_(500, 'kilogram'), self.Q_(680.388555, 'kilogram')))
+
 
     #######################################################
     # TODO: More involved strings (e.g. "It has a value between five to ten")
