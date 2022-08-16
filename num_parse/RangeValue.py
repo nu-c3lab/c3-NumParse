@@ -55,6 +55,12 @@ class RangeValue:
             else:
                 return str(self.min_val.m) + ' to ' + str(self.max_val.m) + ' ' + str(self.min_val.units)
 
+    def __key(self):
+        return (self.min_val.m, str(self.min_val.units), self.max_val.m, str(self.max_val.units))
+
+    def __hash__(self):
+        return hash(self.__key())
+
     ########################################################
     # COMPARISON OPERATORS
     ########################################################
@@ -97,13 +103,22 @@ class RangeValue:
     # TODO: Add handling for performing arithmetic for two RangeValues??
     # TODO: If so, add unit tests for arithmetic involving two RangeValues
     def __add__(self, other):
-        return RangeValue(self.min_val + other, self.max_val + other)
+        if type(other) == RangeValue:
+            return RangeValue(self.min_val + other.min_val, self.max_val + other.max_val)
+        else:
+            return RangeValue(self.min_val + other, self.max_val + other)
 
     def __sub__(self, other):
-        return RangeValue(self.min_val - other, self.max_val - other)
+        if type(other) == RangeValue:
+            return RangeValue(self.min_val - other.min_val, self.max_val - other.max_val)
+        else:
+            return RangeValue(self.min_val - other, self.max_val - other)
 
     def __mul__(self, other):
-        return RangeValue(self.min_val * other, self.max_val * other)
+        if type(other) == RangeValue:
+            return RangeValue(self.min_val * other.min_val, self.max_val * other.max_val)
+        else:
+            return RangeValue(self.min_val * other, self.max_val * other)
 
     def __neg__(self):
         return RangeValue(-self.max_val, -self.min_val)
