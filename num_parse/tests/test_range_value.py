@@ -8,6 +8,10 @@ class TestRangeValue(unittest.TestCase):
         self.num_parser = NumParser()
         self.Q_ = self.num_parser.Quantity
 
+    #######################################################
+    # Comparison / Equality
+    #######################################################
+
     def test_equality_dimensionless(self):
         rv = RangeValue(self.Q_(5), self.Q_(5))
         self.assertEqual(rv, 5)
@@ -73,3 +77,51 @@ class TestRangeValue(unittest.TestCase):
         self.assertLess(rv, self.Q_(10.00001, 'm'))
         self.assertLess(rv, self.Q_(1000.00001, 'cm'))
         self.assertLess(rv, self.Q_(100000.00001, 'mm'))
+
+    #######################################################
+    # Arithmetic
+    #######################################################
+
+    def test_range_addition_different_units(self):
+        a = self.num_parser.parse_num("four")
+        b = self.num_parser.parse_num("38 meters")
+        c = self.num_parser.parse_num("42 meters")
+        self.assertEqual(c, a + b)
+        self.assertEqual(c, b + a)
+
+    def test_range_subtraction_different_units(self):
+        a = self.num_parser.parse_num("four")
+        b = self.num_parser.parse_num("38 meters")
+        c = self.num_parser.parse_num("-34 meters")
+        d = self.num_parser.parse_num("34 meters")
+        self.assertEqual(c, a - b)
+        self.assertEqual(d, b - a)
+
+    def test_range_multiplication_different_units(self):
+        a = self.num_parser.parse_num("four")
+        b = self.num_parser.parse_num("5 meters")
+        c = self.num_parser.parse_num("20 meters")
+        self.assertEqual(c, a * b)
+        self.assertEqual(c, b * a)
+
+    def test_range_addition_same_units(self):
+        a = self.num_parser.parse_num("four meters")
+        b = self.num_parser.parse_num("38 meters")
+        c = self.num_parser.parse_num("42 meters")
+        self.assertEqual(c, a + b)
+        self.assertEqual(c, b + a)
+
+    def test_range_subtraction_same_units(self):
+        a = self.num_parser.parse_num("four meters")
+        b = self.num_parser.parse_num("38 meters")
+        c = self.num_parser.parse_num("-34 meters")
+        d = self.num_parser.parse_num("34 meters")
+        self.assertEqual(c, a - b)
+        self.assertEqual(d, b - a)
+
+    def test_range_multiplication_same_units(self):
+        a = self.num_parser.parse_num("four meters")
+        b = self.num_parser.parse_num("5 meters")
+        c = self.num_parser.parse_num("20 meters ** 2")
+        self.assertEqual(c, a * b)
+        self.assertEqual(c, b * a)

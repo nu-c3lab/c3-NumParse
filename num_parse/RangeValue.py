@@ -12,6 +12,7 @@ TODO: Improve handling of temperature units (e.g. 5 degrees Fahrenehit
 """
 
 import pint
+from copy import deepcopy
 
 class RangeValue:
     def __init__(self,
@@ -23,10 +24,12 @@ class RangeValue:
         # If either one of the Quantities is unitless, then add the units of the other Quantity to it
         if self.max_val is not None and self.max_val.unitless:
             self.max_val._units = self.min_val._units
+            self.max_val._dimensionality = self.min_val._dimensionality
 
         if self.min_val.unitless and self.max_val is not None and self.max_val.units:
             # self.min_val *= self.max_val.units
             self.min_val._units = self.max_val._units
+            self.min_val._dimensionality = self.max_val._dimensionality
 
         # Ensure units of the two values are the same
         assert self.min_val.is_compatible_with(self.max_val)
@@ -99,23 +102,70 @@ class RangeValue:
     ########################################################
     # ARITHMETIC OPERATORS
     ########################################################
-    # TODO: Check that the other value is compatible with the current RangeValue
-    # TODO: Add handling for performing arithmetic for two RangeValues??
-    # TODO: If so, add unit tests for arithmetic involving two RangeValues
+    # TODO: Add unit tests for arithmetic involving two RangeValues
     def __add__(self, other):
         if type(other) == RangeValue:
+            if self.max_val.unitless or other.max_val.unitless:
+                self_copy = deepcopy(self)
+                other_copy = deepcopy(other)
+
+                if self_copy.max_val.unitless and not other_copy.max_val.unitless:
+                    # Set self_copy RangeValue's units/dimensionality to the units/dimensionality of the other RangeValue
+                    self_copy.min_val._units = other_copy.max_val._units
+                    self_copy.min_val._dimensionality = other_copy.max_val._dimensionality
+                    self_copy.max_val._units = other_copy.max_val._units
+                    self_copy.max_val._dimensionality = other_copy.max_val._dimensionality
+
+                if other_copy.max_val.unitless and not self_copy.max_val.unitless:
+                    # Set this RangeValue's units/dimensionality to the units/dimensionality of the other RangeValue
+                    other_copy.min_val._units = self_copy.max_val._units
+                    other_copy.min_val._dimensionality = self_copy.max_val._dimensionality
+                    other_copy.max_val._units = self_copy.max_val._units
+                    other_copy.max_val._dimensionality = self_copy.max_val._dimensionality
+
+                # Perform the addition
+                return RangeValue(self_copy.min_val + other_copy.min_val, self_copy.max_val + other_copy.max_val)
+
+            # Perform the addition
             return RangeValue(self.min_val + other.min_val, self.max_val + other.max_val)
         else:
             return RangeValue(self.min_val + other, self.max_val + other)
 
     def __sub__(self, other):
         if type(other) == RangeValue:
+            if self.max_val.unitless or other.max_val.unitless:
+                self_copy = deepcopy(self)
+                other_copy = deepcopy(other)
+
+                if self_copy.max_val.unitless and not other_copy.max_val.unitless:
+                    # Set self_copy RangeValue's units/dimensionality to the units/dimensionality of the other RangeValue
+                    self_copy.min_val._units = other.max_val._units
+                    self_copy.min_val._dimensionality = other.max_val._dimensionality
+                    self_copy.max_val._units = other.max_val._units
+                    self_copy.max_val._dimensionality = other.max_val._dimensionality
+
+                if other_copy.max_val.unitless and not self_copy.max_val.unitless:
+                    # Set this RangeValue's units/dimensionality to the units/dimensionality of the other RangeValue
+                    other_copy.min_val._units = self_copy.max_val._units
+                    other_copy.min_val._dimensionality = self_copy.max_val._dimensionality
+                    other_copy.max_val._units = self_copy.max_val._units
+                    other_copy.max_val._dimensionality = self_copy.max_val._dimensionality
+
+                # Perform the subtraction
+                return RangeValue(self_copy.min_val - other_copy.min_val, self_copy.max_val - other_copy.max_val)
+
+            # Perform the subtraction
             return RangeValue(self.min_val - other.min_val, self.max_val - other.max_val)
         else:
             return RangeValue(self.min_val - other, self.max_val - other)
 
     def __mul__(self, other):
         if type(other) == RangeValue:
+            if self.max_val.unitless and not other.max_val.unitless:
+                return RangeValue(self.min_val.m * other.min_val, self.max_val.m * other.max_val)
+            if not self.max_val.unitless and other.max_val.unitless:
+                return RangeValue(self.min_val * other.min_val.m, self.max_val * other.max_val.m)
+
             return RangeValue(self.min_val * other.min_val, self.max_val * other.max_val)
         else:
             return RangeValue(self.min_val * other, self.max_val * other)
