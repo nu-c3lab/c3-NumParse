@@ -208,7 +208,8 @@ planck_temperature = (hbar * c ** 5 / gravitational_constant / k ** 2) ** 0.5
 
 # Area
 [area] = [length] ** 2
-are = 100 * meter ** 2
+square_meter = meter ** 2
+are = 100 * square_meter
 barn = 1e-28 * meter ** 2 = b
 darcy = centipoise * centimeter ** 2 / (second * atmosphere)
 hectare = 100 * are = ha
