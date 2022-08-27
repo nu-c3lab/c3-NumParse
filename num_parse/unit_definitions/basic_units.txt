@@ -236,7 +236,7 @@ reciprocal_centimeter = 1 / cm = cm_1 = kayser
 [velocity] = [length] / [time] = [speed]
 knot = nautical_mile / hour = kt = knot_international = international_knot
 mile_per_hour = mile / hour = mph = MPH
-kilometer_per_hour = kilometer / hour = kph = KPH
+kilometer_per_hour = kilometer / hour = kph = KPH = km_per_h
 kilometer_per_second = kilometer / second = kps
 meter_per_second = meter / second = mps
 foot_per_second = foot / second = fps

@@ -95,7 +95,7 @@ class NumParser(object):
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
         self.range_denoters = ['to', 'through', 'until', 'and', 'or']
         numeric_capturing_pattern = '(-?[\w\. ]+)'
-        self.range_expressions = [pattern.format(numeric_capturing_pattern) for pattern in [r'between {0} (and) {0}', r'from {0} (until) {0}', r'{0} (or) {0}', r'{0} (to) {0}', r'{0} (through) {0}', r'{0} (-) {0}']]
+        self.range_expressions = [pattern.format(numeric_capturing_pattern) for pattern in [r'between {0} (and) {0}', r'from {0} (until) {0}', r'{0} (or) {0}', r'{0} (to) {0}', r'{0} (through) {0}', r'{0} ([-–]) {0}']]
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
         self.ureg = NumUnitRegistry(str(units_path), autoconvert_offset_to_baseunit=True)
 
@@ -186,6 +186,7 @@ class NumParser(object):
         #######################################################
         # clean_words = [self.clean_word(word) for word in normalized_input.split()]
         clean_words = [self.clean_word(tok.string) for tok in tokenizer(normalized_input) if tok.line and tok.type != tokenize.ERRORTOKEN]
+        clean_words = [item if item != '/' else 'per' for item in clean_words]
 
         if len(clean_words) == 0:
             raise ValueError("No relevant words/numbers in the given string!")
