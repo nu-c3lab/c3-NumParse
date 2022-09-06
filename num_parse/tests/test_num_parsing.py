@@ -393,6 +393,10 @@ class TestNumParse(unittest.TestCase):
         self.assertEqual(self.num_parser.parse_num("five hundred kilograms to fifteen hundred pounds"),
                          RangeValue(self.Q_(500, 'kilogram'), self.Q_(680.388555, 'kilogram')))
 
+    def test_million_distribution(self):
+        self.assertEqual(self.num_parser.parse_num("$519.2–520.9 million"),
+                         RangeValue(self.Q_(519200000, 'dollar'), self.Q_(520900000, 'dollar')))
+
 
     #######################################################
     # TODO: More involved strings (e.g. "It has a value between five to ten")

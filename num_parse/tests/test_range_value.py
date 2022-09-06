@@ -122,6 +122,6 @@ class TestRangeValue(unittest.TestCase):
     def test_range_multiplication_same_units(self):
         a = self.num_parser.parse_num("four meters")
         b = self.num_parser.parse_num("5 meters")
-        c = self.num_parser.parse_num("20 meters ** 2")
+        c = self.num_parser.parse_num("20 square meters")
         self.assertEqual(c, a * b)
         self.assertEqual(c, b * a)

@@ -96,6 +96,7 @@ class NumParser(object):
         self.range_denoters = ['to', 'through', 'until', 'and', 'or']
         numeric_capturing_pattern = '(-?[\w\. ]+)'
         self.range_expressions = [pattern.format(numeric_capturing_pattern) for pattern in [r'between {0} (and) {0}', r'from {0} (until) {0}', r'{0} (or) {0}', r'{0} (to) {0}', r'{0} (through) {0}', r'{0} ([-–]) {0}']]
+        self.multipliers = ['thousand', 'million', 'billion', 'trillion']
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
         self.ureg = NumUnitRegistry(str(units_path), autoconvert_offset_to_baseunit=True)
 
@@ -200,14 +201,14 @@ class NumParser(object):
         if unit_string:
             clean_words = clean_words[:unit_span[0]] + clean_words[unit_span[1]:]
         final_words = [word for word in clean_words if self.is_relevant_word(word)]
-        #######################################################
-        # Handle value ranges
-        #######################################################
-        # is_num_range, range_denoter = self.has_number_range(clean_words)
+
         range_denoter, min_number_words, max_number_words = self.get_number_range(' '.join(clean_words))
         if range_denoter:
             min_val = self.parse_num(' '.join(min_number_words)).min_val if len(min_number_words) else ''
             max_val = self.parse_num(' '.join(max_number_words)).max_val if len(max_number_words) else ''
+            if max_val.m > 1000 * min_val.m and max_number_words[-1] in self.multipliers and min_number_words[-1] not in self.multipliers:
+                # distribute multiplier from max val
+                min_val = self.parse_num(' '.join(min_number_words + [max_number_words[-1]])).min_val
             q1 = self.Quantity(min_val.m, unit_string) if min_val.unitless else min_val
             q2 = self.Quantity(max_val.m, unit_string) if max_val.unitless else max_val
             final_num = RangeValue(q1, q2)
