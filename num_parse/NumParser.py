@@ -94,7 +94,7 @@ class NumParser(object):
         self.decimal_denoters = ['point', 'dot', '.']
         self.negative_denoters = ['negative', '-', 'neg', 'minus']
         self.range_denoters = ['to', 'through', 'until', 'and', 'or']
-        numeric_capturing_pattern = '(-?[\w\. ]+)'
+        numeric_capturing_pattern = r'(-?[\w\. ]+)'
         self.range_expressions = [pattern.format(numeric_capturing_pattern) for pattern in [r'between {0} (and) {0}', r'from {0} (until) {0}', r'{0} (or) {0}', r'{0} (to) {0}', r'{0} (through) {0}', r'{0} ([-–]) {0}']]
         self.multipliers = ['thousand', 'million', 'billion', 'trillion']
         units_path = Path(__file__).parent / 'unit_definitions/basic_units.txt'
@@ -156,6 +156,17 @@ class NumParser(object):
                     return bool_result(False)
 
         self.Quantity = Quantity
+        self.time_units = list(self.get_time_units())
+
+    def get_time_units(self):
+        def is_time_unit(unit_name):
+            try:
+                unit = self.Quantity._REGISTRY[unit_name]
+            except AttributeError as e:
+                return None
+            if unit.dimensionality._d == {'[time]': 1}:
+                return True
+        return filter(is_time_unit, self.Quantity._REGISTRY)
 
     def parse_num(self,
                   number_string: str) -> RangeValue:
@@ -198,9 +209,6 @@ class NumParser(object):
         unit_span, unit_string = self.has_unit_word(clean_words, True)
         if not unit_string:
             unit_span, unit_string = self.has_unit_word(clean_words, False)
-        if unit_string:
-            clean_words = clean_words[:unit_span[0]] + clean_words[unit_span[1]:]
-        final_words = [word for word in clean_words if self.is_relevant_word(word)]
 
         range_denoter, min_number_words, max_number_words = self.get_number_range(' '.join(clean_words))
         if range_denoter:
@@ -213,6 +221,26 @@ class NumParser(object):
             q2 = self.Quantity(max_val.m, unit_string) if max_val.unitless else max_val
             final_num = RangeValue(q1, q2)
             return final_num
+
+        if len(clean_words) == 3 and clean_words[1] == ':':
+            unit_string = ':'
+            clean_words = clean_words[:1] + ['minutes'] + clean_words[2:] + ['seconds']
+        if unit_string:
+            if not range_denoter and sum(map(lambda word: 1 if word in self.time_units or word.rstrip('s') in self.time_units else 0, clean_words)) > 1:
+                quantities = []
+                idx = 0
+                while idx < len(clean_words):
+                    if clean_words[idx] in self.time_units or clean_words[idx].rstrip('s') in self.time_units:
+                        unit_string = clean_words[idx]
+                        quantities.append(self.parse_num(' '.join(clean_words[:idx+1])))
+                        clean_words = clean_words[idx+1:]
+                        idx = 0
+                    else:
+                        idx += 1
+                return sum(quantities, start=RangeValue(self.Quantity(0, unit_string)))
+            else:
+                clean_words = clean_words[:unit_span[0]] + clean_words[unit_span[1]:]
+        final_words = [word for word in clean_words if self.is_relevant_word(word)]
 
         #######################################################
         # Check if the input is a negative number, as denoted by negative indicator at start of the string

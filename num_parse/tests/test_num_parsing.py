@@ -351,6 +351,14 @@ class TestNumParse(unittest.TestCase):
         rv = RangeValue(self.Q_(6, 'years'), self.Q_(7, 'years'))
         self.assertEqual(self.num_parser.parse_num('between six and seven years'), rv)
 
+    def test_big_duration(self):
+        rv = RangeValue(self.Q_(258803256086, 'seconds'))
+        self.assertEqual(self.num_parser.parse_num('8 millenniums, 2 centuries, 6 decades, 4 years, 11 months, 3 weeks, 2 days, 5 hours, 51 minutes, and 16 seconds'), rv)
+
+    def test_minutes_duration(self):
+        rv = RangeValue(self.Q_(238, 'seconds'))
+        self.assertEqual(self.num_parser.parse_num('3:58'), rv)
+
     #######################################################
     # Combination tests
     #######################################################
