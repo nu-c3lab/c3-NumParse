@@ -14,7 +14,7 @@ and any values in this form to be compared against each other.
 ## Installation
 
 ```commandline
-pip install c3_NumParse
+pip install NumParse
 ```
 
 ## Usage

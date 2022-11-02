@@ -4,11 +4,11 @@ with open('requirements.txt', 'r') as requirements:
     install_requires = requirements.read().splitlines()
 
 setup(
-    name='c3-NumParse',
-    version='0.0.2',
+    name='NumParse',
+    version='0.1.0',
     author='C3 Lab',
     author_email='markosterbentz2023@u.northwestern.edu',
-    description='A package for performing numeric parsing.',
+    description='A package for extracting numeric values/ranges from strings.',
     url='https://github.com/nu-c3lab/c3-NumParse',
     packages=find_packages(),
     python_requires='>=3.7',
