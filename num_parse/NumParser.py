@@ -356,7 +356,7 @@ class NumParser(object):
         :return: The cleaned word.
         """
 
-        return word.replace(',', '')
+        return word.replace(',', '').lower()
 
     def is_relevant_word(self,
                          word: str) -> bool:
